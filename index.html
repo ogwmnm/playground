@@ -37,52 +37,63 @@
   <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/ace/1.1.9/ace.js"></script>
   <script>
-    var editors = [{
-      id: "html",
-      syntax: "html"
-    }, {
-      id: "css",
-      syntax: "css"
-    }, {
-      id: "js",
-      syntax: "javascript"
-    }],
+  var playground = {
+    editor: {},
+    output: {},
+    init: function() {
+      this.createEditors();
+      this.initOutput();
+    },
+    createEditors: function() {
+      var that = this;
+      $.each([{
+        id: "html",
+        syntax: "html"
+      }, {
+        id: "css",
+        syntax: "css"
+      }, {
+        id: "js",
+        syntax: "javascript"
+      }], function( i, edt ) {
+        var editor,
+            id = edt.id + "-editor",
+            syntax = edt.syntax;
 
-    aceEditors = {},
+        editor = ace.edit( id );
+        editor.setTheme( "ace/theme/monokai" );
+        editor.getSession().setMode( "ace/mode/" + syntax );
+        editor.getSession().setTabSize( 2 );
+        editor.getSession().setUseSoftTabs( true );
+        editor.setHighlightActiveLine( true );
+        editor.getSession().on( "change", $.proxy( that.render, that ) );
 
-    $output = $( "#output" );
-
-    $.each( editors, function( i, edt ) {
-      var editor,
-          id = edt.id + "-editor",
-          syntax = edt.syntax;
-
-      editor = ace.edit( id );
-      editor.setTheme( "ace/theme/monokai" );
-      editor.getSession().setMode( "ace/mode/" + syntax );
-      editor.getSession().setTabSize( 2 );
-      editor.getSession().setUseSoftTabs( true );
-      editor.setHighlightActiveLine( true );
-      editor.getSession().on( "change", render );
-
-      aceEditors[ edt.id ] = editor;
-    });
-
-    $output.contents().find( "head" ).append( "<style rel='stylesheet' id='style'></style>" );
-
-    function render() {
+        that.editor[ edt.id ] = editor;
+      })
+    },
+    initOutput: function() {
+      this.$output = $( "#output" );
+      this.output.$head = this.$output.contents().find( "head" );
+      this.output.$body = this.$output.contents().find( "body" );
+      this.output.$style = $( "<style rel='stylesheet'></style>" );
+      this.output.$head.append( this.output.$style );
+    },
+    render: function() {
       // Add HTML
-      $output.contents().find( "body" ).html( aceEditors.html.getValue() );
+      this.output.$body.html( this.editor.html.getValue() );
 
       // Add CSS
-      $output.contents().find( "#style" ).html( aceEditors.css.getValue() );
+      this.output.$style.html( this.editor.css.getValue() );
 
-      // Add JS
+      // Add JavaScript
       try {
-        $output[0].contentWindow.eval( aceEditors.js.getValue() );
-      } catch ( e ) {
+        this.$output[0].contentWindow.eval( this.editor.js.getValue() );
+      } catch( e ) {
       }
     }
+  };
+
+  playground.init();
   </script>
 </body>
 </html>
